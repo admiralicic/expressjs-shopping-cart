@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var expressHbs = require('express-handlebars');
 var mongoose = require('mongoose');
+var session = require('express-session');
 
 mongoose.connect('mongodb://localhost/shopping');
 
@@ -23,6 +24,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(session({secret: 'mySuperSecret', resave: false, saveUninitialized: false}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
