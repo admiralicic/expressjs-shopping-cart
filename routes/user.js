@@ -3,12 +3,24 @@ var router = express.Router();
 var Product = require('../models/product');
 var csrf = require('csurf');
 var passport = require('passport');
+var Order = require('../models/order');
+var Cart = require('../models/cart');
 
 router.use(csrf());
 
 
 router.get('/profile', isLoggedIn, function (req, res, next) {
-  res.render('user/profile');
+  Order.find({ user: req.user }, function (err, orders) {
+    if (err) {
+      return res.write('Error!');
+    }
+    var cart;
+    orders.forEach(function (order) {
+      cart = new Cart(order.cart);
+      order.items = cart.generateArray();
+    });
+    res.render('user/profile', { orders: orders});
+  });
 });
 
 router.get('/logout', isLoggedIn, function (req, res, next) {
@@ -26,10 +38,17 @@ router.get('/signup', function (req, res, next) {
 });
 
 router.post('/signup', passport.authenticate('local.signup', {
-  successRedirect: '/user/profile',
   failureRedirect: '/user/signup',
   failureFlash: true
-}));
+}), function (req, res, next) {
+  if (req.session.oldUrl) {
+    var oldUrl = req.session.oldUrl;
+    req.session.oldUrl = null;
+    res.redirect(oldUrl);
+  } else {
+    res.redirect('/user/profile');
+  }
+});
 
 router.get('/signin', function (req, res, next) {
   var messages = req.flash('error');
@@ -37,10 +56,17 @@ router.get('/signin', function (req, res, next) {
 });
 
 router.post('/signin', passport.authenticate('local.login', {
-  successRedirect: '/user/profile',
   failureRedirect: '/user/signin',
   failureFlash: true
-}));
+}), function (req, res, next) {
+  if (req.session.oldUrl) {
+    var oldUrl = req.session.oldUrl;
+    req.session.oldUrl = null;
+    res.redirect(oldUrl);
+  } else {
+    res.redirect('/user/profile');
+  }
+});
 
 
 
